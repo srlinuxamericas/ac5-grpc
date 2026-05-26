@@ -37,7 +37,7 @@ Both leafs and Spine nodes will be running release 24.10.1 of Nokia [SR Linux](h
 
 Both clients will be running a light version of [Alpine Linux](https://alpinelinux.org/).
 
-See the [topology](ac4-grpc.clab.yml) file for more details.
+See the [topology](ac5-grpc.clab.yml) file for more details.
 
 ## 0 Deploying the lab
 
@@ -54,20 +54,20 @@ curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
 Clone the Git repo to your VM:
 
 ```
-git clone https://github.com/srlinuxamericas/ac4-grpc.git
+git clone https://github.com/srlinuxamericas/ac5-grpc.git
 ```
 
 Verify that the git repo files are now available on your VM.
 
 ```
-ls -lrt ac4-grpc/
+ls -lrt ac5-grpc/
 ```
 
 To deploy the lab, run the following:
 
 ```
-cd ac4-grpc
-sudo clab deploy -t ac4-grpc.clab.yml
+cd ac5-grpc
+sudo clab deploy -t ac5-grpc.clab.yml
 ```
 
 [Containerlab](https://containerlab.dev/) will deploy the lab and display a table with the list of nodes and their IPs.
@@ -115,10 +115,10 @@ This lab can be deployed using GitHub Codespaces. Once you are logged into GitHu
 
 ---
 <div align=center>
-<a href="https://codespaces.new/srlinuxamericas/ac4-grpc?quickstart=1">
+<a href="https://codespaces.new/srlinuxamericas/ac5-grpc?quickstart=1">
 <img src="https://gitlab.com/rdodin/pics/-/wikis/uploads/d78a6f9f6869b3ac3c286928dd52fa08/run_in_codespaces-v1.svg?sanitize=true" style="width:50%"/></a>
 
-**[Run](https://codespaces.new/srlinuxamericas/ac4-grpc?quickstart=1) this lab in GitHub Codespaces for free**.  
+**[Run](https://codespaces.new/srlinuxamericas/ac5-grpc?quickstart=1) this lab in GitHub Codespaces for free**.  
 [Learn more](https://containerlab.dev/manual/codespaces/) about Containerlab for Codespaces.
 
 </div>
@@ -239,7 +239,7 @@ We can see that all 4 gRPC services for this workshop are enabled on both gRPC s
 Secure gRPC server is listening on the default gRPC port (57400) while the insecure gRPC server is listening on port 57401.
 
 
-## Next Section:   [gNMI Service](https://github.com/srlinuxamericas/ac4-grpc/tree/main/gnmi)
+## Next Section:   [gNMI Service](https://github.com/srlinuxamericas/ac5-grpc/tree/main/gnmi)
 
 --------------------------
 ## Useful links
