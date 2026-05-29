@@ -232,4 +232,102 @@ INFO[0005] target "leaf1:57401" activate response "activate_ok:{}"
 
 Then verify the current software version using the `os verify` RPC used above.
 
+## 3.8 gNOI automation using Ansible
+
+Ansible modules can be used to automate gNOI or any other gRPC services.
+
+Let's assume we want to check the reachability of multiple IP's from multiple switches in our sample topology. This can be automated using Ansible.
+
+For our topology, we want to ping some IPs on `leaf2` from both `leaf1` and `spine`. We will also use a 3rd unknown IP to trigger a failure warning.
+
+Create ansible inventory file on your VM:
+
+```bash
+cat << EOF >> ping-inventory.yml
+all:
+  children:
+    nokia_switches:
+      hosts:
+        leaf1:
+          ansible_host: leaf1
+        spine:
+          ansible_host: spine
+
+      vars:
+        # Common credentials for all switches in this group
+        gnoi_port: 57400
+        gnoi_user: admin
+        gnoi_pass: $EVENT_PASSWORD
+        
+        # The universal ping list
+        ping_targets:
+          - { ip: "2.2.2.2", vrf: "default" }
+          - { ip: "192.168.20.2", vrf: "default" }
+          - { ip: "10.46.2.42", vrf: "default" }
+EOF
+```
+
+Next, create the ansible playbook on your VM:
+
+```bash
+
+cat << EOF >> ping-playbook.yml
+---
+- name: gNOI Ping
+  hosts: nokia_switches
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Run gNOIc
+      ansible.builtin.shell: >
+        gnoic -a {{ ansible_host }}:{{ gnoi_port }} 
+        -u {{ gnoi_user }} 
+        -p {{ gnoi_pass }} 
+        --insecure 
+        system ping 
+        --destination {{ item.ip }} 
+        --ns {{ item.vrf }}
+        --count 1
+        --wait 1s
+      loop: "{{ ping_targets }}"
+      register: raw_ping_results
+      changed_when: false
+      ignore_errors: true 
+
+    - name: Report Successful Pings
+      vars:
+        is_ok: "{{ '0.00% packet loss' in item.stdout and '1 packets received' in item.stdout }}"
+      ansible.builtin.debug:
+        msg: "[{{ inventory_hostname }}] {{ item.item.ip }} ({{ item.item.vrf }}) -> OK"
+      when: is_ok
+      loop: "{{ raw_ping_results.results }}"
+      loop_control:
+        label: "{{ item.item.ip }}"
+
+    - name: Report Failed Pings
+      vars:
+        is_ok: "{{ '0.00% packet loss' in item.stdout and '1 packets received' in item.stdout }}"
+      ansible.builtin.fail:
+        msg: "[{{ inventory_hostname }}] {{ item.item.ip }} ({{ item.item.vrf }}) -> NOK"
+      when: not is_ok
+      loop: "{{ raw_ping_results.results }}"
+      loop_control:
+        label: "{{ item.item.ip }}"
+      register: failure_check
+      ignore_errors: false
+EOF
+```
+
+Execute the playbook from your VM:
+
+```bash
+ansible-playbook -i ping-inventory.yml ping-playbook.yml
+```
+
+Expected output:
+
+```bash
+```
+
 ## Next Section: [gNSI Service](https://github.com/srlinuxamericas/ac4-grpc/tree/main/gnsi)  
