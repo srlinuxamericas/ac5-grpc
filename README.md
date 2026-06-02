@@ -26,7 +26,6 @@ The objective of the hands on section of this workshop is the following:
 - Traffic steering using gRIBI
 
 ## Lab Topology
-
 Each workshop participant will be provided with the below topology consisting of 2 leaf and 1 spine nodes along with 2 clients. The Leaf-Spine architecture is typical in a Data Center environment and clients are simulating workloads or VMs.
 
 ![image](images/lab-topology.jpg)
