@@ -212,7 +212,7 @@ If you are wondering how to prepare the configuration in `json` format, SR Linux
 info interface ethernet-1/1 | as json
 ```
 
-Let's push the system interface configuration on all 3 devices.
+Let's push the system interface configuration on all 3 devices. ( make sure you are in ac5-grpc directory) 
 
 ```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure set --update-path /interface[name=system0] --update-file gnmi/leaf1-system.cfg --encoding json_ietf
