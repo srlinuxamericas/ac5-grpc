@@ -176,3 +176,8 @@ Expected output:
 "ipv4-prefix": "0.0.0.0/0",
 "route-type": "srl_nokia-common:gribi"
 ```
+
+To destroy the lab, run:
+```bash
+sudo clab des -a
+```
