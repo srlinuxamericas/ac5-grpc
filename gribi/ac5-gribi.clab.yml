@@ -1,0 +1,37 @@
+name: ac5-gribi
+
+mgmt:
+  network: ac5-grpc-lab-mgmt
+  ipv4-subnet: 172.50.20.0/24
+  ipv6-subnet: 2001:172:50:20::/64
+
+prefix: ""
+topology:
+  defaults:
+    kind: nokia_srlinux
+  kinds:
+    nokia_srlinux:
+      type: ixr-d2l
+      image: ghcr.io/nokia/srlinux:24.10.1
+  nodes:
+    leaf1:
+      startup-config: configs/leaf1-gribi-startup.cfg
+      mgmt-ipv4: 172.50.20.2
+      mgmt-ipv6: 2001:172:50:20::2
+      type: ixr-x3b
+      license: /home/nokiauser/images/srlinux-24.lic
+    leaf2:
+      startup-config: configs/leaf2-gribi-startup.cfg
+      mgmt-ipv4: 172.50.20.4
+      mgmt-ipv6: 2001:172:50:20::4
+    spine:
+      startup-config: configs/spine-gribi-startup.cfg
+      mgmt-ipv4: 172.50.20.3
+      mgmt-ipv6: 2001:172:50:20::3
+  links:
+      # spine-leaf links
+    - endpoints: ["leaf1:e1-1", "spine:e1-1"]
+    - endpoints: ["leaf2:e1-2", "spine:e1-2"]
+    
+      # leaf-leaf links
+    - endpoints: ["leaf1:e1-5", "leaf2:e1-5"]
