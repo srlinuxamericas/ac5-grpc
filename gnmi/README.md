@@ -606,4 +606,4 @@ Stop the ping using `CTRL+c` and check the streaming output again. The stream ha
 
 Stop the streaming session using `CTRL+c`.
 
-## Next Section: [OpenConfig](https://github.com/srlinuxamericas/ac4-grpc/tree/main/openconfig)
+## Next Section: [OpenConfig]([https://github.com/srlinuxamericas/ac4-grpc/tree/main/openconfig](https://github.com/srlinuxamericas/ac5-grpc/tree/bafb85e3a6e64ba7d9dbda8c740628312e6b4e5d/openconfig)
