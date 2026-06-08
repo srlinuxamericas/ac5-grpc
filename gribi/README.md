@@ -390,6 +390,8 @@ INFO[0000] "leaf1:57401": timestamp: 1747763792059403059
 result: OK 
 ```
 
+If you would like to do the another challenge ## Next Section:[z-bonus-challenge](https://github.com/srlinuxamericas/ac5-grpc/tree/main/z-bonus-challenge)
+
 To destroy the lab, run:
 ```bash
 sudo clab des -a
