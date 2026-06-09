@@ -1,6 +1,6 @@
 # Mastering gRPC-Based Services for Network Automation
 
-Welcome to the workshop on *Mastering gRPC-based services for network auotmation* at Network Automation Forum's Autocon5.
+Welcome to the workshop on *Mastering gRPC-based services for network auotmation* at Network Automation Forum's AutoCon5.
 
 This README is your starting point into the hands on section.
 
@@ -52,19 +52,19 @@ curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
 
 Clone the Git repo to your VM:
 
-```
+```bash
 git clone https://github.com/srlinuxamericas/ac5-grpc.git
 ```
 
 Verify that the git repo files are now available on your VM.
 
-```
+```bash
 ls -lrt ac5-grpc/
 ```
 
 To deploy the lab, run the following:
 
-```
+```bash
 cd ac5-grpc
 sudo clab deploy -t ac5-grpc.clab.yml
 ```
@@ -104,7 +104,7 @@ sudo clab deploy -t ac5-grpc.clab.yml
 
 To display all deployed labs on your VM at any time, use:
 
-```
+```bash
 sudo clab inspect --all
 ```
 
@@ -134,7 +134,7 @@ Password: Refer to the provided sheet
 
 Note: Password less authentication is enabled by Containerlab using SSH keys.
 
-```
+```bash
 ssh leaf1
 ```
 
@@ -158,13 +158,13 @@ After the lab is deployed, check reachability between leaf and spine devices usi
 
 Example on spine to Leaf1 for IPv4:
 
-```
+```bash
 ping -c 3 192.168.10.2 network-instance default
 ```
 
 Example on spine to Leaf1 for IPv6:
 
-```
+```bash
 ping6 -c 3 192:168:10::2 network-instance default
 ```
 
@@ -181,7 +181,7 @@ All 4 clients are installed when initializing the VM or codespace.
 
 Verify that clients are installed on your VM:
 
-```
+```bash
 gnmic version
 gnoic version
 gnsic version
@@ -247,9 +247,10 @@ Secure gRPC server is listening on the default gRPC port (57400) while the insec
 * [gNMIc](https://gnmic.openconfig.net/)
 * [gNOIc](https://gnoic.kmrd.dev/)
 * [gRIBIc](https://gribic.kmrd.dev//)
+* [ProtoMap, interactive documentation for gNxI RPCs, services and data models](https://protomap.netdevops.me/)
 
 ### SR Linux
 * [SR Linux documentation](https://documentation.nokia.com/srlinux/)
 * [Learn SR Linux](https://learn.srlinux.dev/)
-* [YANG Browser](https://yang.srlinux.dev/)
+* [Nokia YANG Browser](https://yangbrowser.nokia.com/srlinux/)
 * [gNxI Browser](https://gnxi.srlinux.dev/)

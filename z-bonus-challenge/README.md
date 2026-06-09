@@ -2,7 +2,10 @@
 
 ## Securing gNMI service
 
-When setting up streaming telemetry to an external system, by default the system allows gNMI Get, Set and Subscribe from the external system.
+When setting up streaming telemetry to an external system, by default the system allows gNMI Get, Set and Subscribe from the external system.  
+This is not particularly desirable, as users normally only used for read-only operations can still modify the configuration, which can pose a security risk.
+
+Let's fix this!
 
 Configure a new user `grclient1` on `leaf1` that will be used for streaming telemetry.
 
@@ -16,7 +19,7 @@ set / system configuration role gnmi-clients rule / action write
 commit now
 ```
 
-Configure a gNSI Authz policy to allow gNMI Get, Subscribe  and deny gNMI Set.
+Configure a gNSI Authz policy to allow gNMI Get, Subscribe and deny gNMI Set, effectively creating a "read-only" Authz policy for this new client.
 
 Here are the commands for Get, Set and Subscribe to be run from the VM.
 
@@ -95,7 +98,7 @@ Verify the new policy is installed:
 gnmic -a leaf1 -u admin -p admin --skip-verify get --path /system/aaa/authorization/authz-policy --encoding json_ietf
 ```
 
-Note - as gnsic is beta, you may have to run the policy install command multiple times until you see the policy in the verification output above.
+Note - as gNSIc is beta, you may have to run the policy install command multiple times until you see the policy in the verification output above.
 
 After the policy is installed, try gNMI Set:
 
@@ -157,7 +160,7 @@ operations:
       nhg: 1
 ```
 
-Copy the payload to a file and use gribic to inject this route.
+Copy the payload to a file and use gRIBIc to inject this route.
 
 ```bash
 gribic -a leaf1:57401 -u admin -p admin --insecure modify --input-file file-name.yml
@@ -177,7 +180,7 @@ Expected output:
 "route-type": "srl_nokia-common:gribi"
 ```
 
-To destroy the lab, run:
+To wrap up the workshop and destroy the lab, run:
 ```bash
 sudo clab des -a
 ```

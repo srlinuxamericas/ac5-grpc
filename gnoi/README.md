@@ -26,7 +26,7 @@ Expected output:
 
 The System Ping RPC can be used to initiate a ping on the router from a client.
 
-For our test, let's ping the system loopback of `leaf2` from `leaf1`.
+For our test, let's ping the system loopback of `leaf2` from `leaf1`. The network-instance (namespace) should be specified too with the `--ns` flag, as by default in SR Linux, the ping will be sent in the management network-instance.
 
 ```bash
 gnoic -a leaf1:57401 -u gnoic1 -p gnoic1 --insecure system ping --destination 2.2.2.2 --ns default --count 1 --wait 1s
@@ -43,9 +43,9 @@ round-trip min/avg/max/stddev = 56.421/56.421/56.421/0.000 ms
 
 ## 3.3 gNOI System Traceroute
 
-Traceroute RPC can be used to trace the path to the destination using ICMP messages similar to a standard traceroute but executed remotely from a gNOI client.
+The gNOI Traceroute RPC can be used to trace the path to the destination using ICMP messages similar to a standard traceroute but executed remotely from a gNOI client.
 
-Let us trace the path for `leaf2` loopback IP.
+Let us trace the path for `leaf2` loopback IP. The same note applies for traceroute as well as for ping: the network-instance should also be set.
 
 ```bash
 gnoic -a leaf1:57401 -u gnoic1 -p gnoic1 --insecure system traceroute --destination 2.2.2.2 --ns default --wait 1s
@@ -69,7 +69,7 @@ We will be using gNOI File Get RPC to do a remote configuration backup of leaf1.
 
 First let's verify the configuration file exists. We will use the gNOI File Stat RPC for this purpose.
 
-```
+```bash
 gnoic -a leaf1:57401 -u client1 -p client1 --insecure file stat --path /etc/opt/srlinux/config.json
 ```
 
@@ -85,7 +85,7 @@ Expected output:
 
 The config file is present in the path. Now let's transfer the file our host VM. We will use gNOI File Get RPC.
 
-```
+```bash
 gnoic -a leaf1:57401 -u client1 -p client1 --insecure file get --file /etc/opt/srlinux/config.json --dst .
 ```
 
@@ -99,7 +99,7 @@ INFO[0000] "leaf1:57400" file "/etc/opt/srlinux/config.json" saved
 
 Verify that the file is now present locally on your host.
 
-```
+```bash
 ls -lrt etc/opt/srlinux/config.json
 ```
 
@@ -109,9 +109,9 @@ This action can be put inside a cron job and scheduled for daily backups.
 
 gNOI File Put RPC can be used to transfer files to the router.
 
-A configuration backup on a remote server can be transferred to SR Linux device using gNOI File Put RPC.
+A configuration backup on a remote server can be transferred to an SR Linux device using this RPC method.
 
-To test this, create a file on the host VM.
+To test this, create a mock configuration backup file called `my-config.bkp` on your VM.
 
 ```bash
 echo "config ospf bgp" > my-config.bkp
@@ -130,7 +130,7 @@ INFO[0000] "leaf1:57401" sending file="my-config.bkp" hash
 INFO[0000] "leaf1:57401" file "my-config.bkp" written successfully 
 ```
 
-Verify using File Stat RPC that the file exists on `leaf1`.
+Verify using File Stat RPC that the file now exists on `leaf1`.
 
 ```bash
 gnoic -a leaf1:57401 -u client1 -p client1 --insecure file stat --path /var/log/srlinux/my-config.bkp
@@ -146,7 +146,7 @@ Expected output:
 +-------------+--------------------------------+---------------------------+------------+------------+------+
 ```
 
-Now that the config backup is transferred, regular CLI process can be followed to restore this config. This is outside the scope of this activity.
+Now that the mock configuration backup is transferred, a regular CLI process can be followed to restore this config. This is outside the scope of this activity.
 
 ## 3.6 gNOI Healthz
 
@@ -170,13 +170,13 @@ Expected output:
 +-------------+---------------------+-------------------------+--------------------+-----------------------------------------+---------------------+---------------+
 ```
 
-As this is a containerlab node, the health status is Unspecified.
+As this is a simulated Containerlab node, the health status is Unspecified.
 
 ## 3.7 Software Upgrade using gNOI
 
-This section is theory only as these RPCs cannot be implemented on a node in Containerlab.
+This section is theory only, as these RPCs cannot be implemented on a simulated node in Containerlab.
 
-The following commands can be used to automate software upgrade using gNOI RPCs.
+The `os` commands can be used to automate software upgrade using gNOI RPCs.
 
 To verify the current software verion on the device:
 
@@ -197,7 +197,7 @@ Expected output:
 To transfer a software image file to the device:
 
 ```bash
-gnoic -a leaf1:57401 -u admin -p admin --insecure os install --version srlinux_23.10.1-218 --pkg ../23.10/srlinux-23.10.1-218.bin
+gnoic -a leaf1:57401 -u admin -p admin --insecure os install --version srlinux_25.10.1 --pkg ../25.10/srlinux-25.10.1.bin
 ```
 
 In this commands, `version` refers to the software version of the image being transferred and `pkg` refers to the location of the image file on the host VM.
@@ -221,7 +221,7 @@ INFO[0030] target "leaf1:57401": TransferContent done...
 To activate a software image on the device:
 
 ```bash
-gnoic -a leaf1:57401 -u admin -p admin --insecure os activate --version 23.10.1-218
+gnoic -a leaf1:57401 -u admin -p admin --insecure os activate --version 25.10.1
 ```
 
 Expected output:

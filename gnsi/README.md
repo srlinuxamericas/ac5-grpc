@@ -1,6 +1,6 @@
 # 4 gNSI Use Cases
 
-gNSI services and RPCs are used for securing the switch. This includes Authorization policies for gRPC service access, Certificate management and Accounting.
+gNSI services and RPCs are used for securing network devices. This includes Authorization policies for gRPC service access, Certificate management and Accounting.
 
 In this section, we will learn about some of them.
 
@@ -16,11 +16,11 @@ We will be using gNSI to configure an authorization policy on leaf1 that will pr
 
 Let's start by verifying that the user `gnoic1` has access to list, get and put files on leaf1.
 
-We will switch to using secure gRPC communication for this section as gNSI policies apply to secure requests only.
+We will switch to using secure gRPC communication for this section as gNSI policies apply to secure requests only. The secure gRPC service runs on port 57400, which is the default gRPC server port - therefore we can omit this from the target name.
 
 **4.1.1 List file:**
 
-```
+```bash
 gnoic -a leaf1 -u gnoic1 -p gnoic1 --skip-verify file stat --path /etc/opt/srlinux/config.json
 ```
 
@@ -36,7 +36,7 @@ Expected output:
 
 **4.1.2 Get file:**
 
-```
+```bash
 gnoic -a leaf1 -u gnoic1 -p gnoic1 --skip-verify file get --file /etc/opt/srlinux/config.json --dst .
 ```
 
@@ -58,7 +58,7 @@ echo "this is a corrupted image file" > corrupt.img
 
 Now transfer this file to the switch.
 
-```
+```bash
 gnoic -a leaf1 -u gnoic1 -p gnoic1 --skip-verify file put --file corrupt.img --dst /var/log/srlinux/corrupt.img
 ```
 
@@ -71,7 +71,7 @@ INFO[0000] "leaf1:57400" file "corrupt.img" written successfully
 
 Verify on leaf1 that the file transferred exists.
 
-```
+```bash
 gnoic -a leaf1 -u gnoic1 -p gnoic1 --skip-verify file stat --path /var/log/srlinux/corrupt.img
 ```
 
@@ -149,7 +149,7 @@ This is the Authz policy payload that we will push. This gives access to gNOI Fi
 
 **4.1.5 Let's push the policy using gNSIc.**
 
-```
+```bash
 gnsic -a leaf1 -u admin -p admin --skip-verify authz rotate --policy "{\"name\":\"Ext-clients\",\"allow_rules\":[{\"name\":\"backup-access\",\"source\":{\"principals\":[\"gnoic1\",\"gnoi-clients\"]},\"request\":{\"paths\":[\"/gnoi.file.File/Get\",\"/gnoi.file.File/Stat\"]}}],\"deny_rules\":[{\"name\":\"backup-access\",\"source\":{\"principals\":[\"gnoic1\",\"gnoi-clients\"]},\"request\":{\"paths\":[\"/gnoi.file.File/Put\"]}}]}"
 ```
 
@@ -162,7 +162,7 @@ INFO[0001] "leaf1:57400": sending finalize request
 INFO[0001] "leaf1:57400": closing stream 
 ```
 
-Verify that the authz policy was applied on the system. We will use gNMI Get RPC for this purpose.
+Verify that the uthz policy was applied on the system. We will use gNMI Get RPC for this purpose.
 
 ```bash
 gnmic -a leaf1 -u admin -p admin --skip-verify get --path /system/aaa/authorization/authz-policy --encoding json_ietf
@@ -233,7 +233,7 @@ Expected output:
 ]
 ```
 
-Note - As gNSIc client is in beta phase, it might not push the policy in the first attempt. If gNMI Get is still showing the default policy, repeat the gNSIc Authz command to push the policy again.
+Note - As the gNSIc client is in beta phase, it might not push the policy in the first attempt. If gNMI Get is still showing the default policy, repeat the gNSIc Authz command to push the policy again.
 
 Now, test the list, get, put file operations again.
 
@@ -257,9 +257,9 @@ tools system aaa authorization authz-policy remove
 
 ## 4.2 TLS Certificate Management
 
-Another use case of gNSI is to configure and manage TLS profile and certificates on the switch.
+Another use case of gNSI is to configure and manage TLS profiles and certificates on network devices.
 
-gNSI Certz RPCs are used for this purpose.
+The gNSI Certz RPCs are used for this purpose.
 
 Assuming our starting point is an insecure connection, we will build a TLS profile with certificates and use it on a gRPC server to make our connection secure.
 
@@ -312,7 +312,9 @@ Expected output:
 
 We confirmed that the switch can generate a CSR.
 
-Now we are ready to generate the CSR. Before we do that, create the CA certificate and key to sign the CSR. We will use Containerlab tools for this purpose. In a real environment, the CSR is sent to an external CA for signing.
+Now we are ready to generate the CSR. Before we do that, we have to create a CA certificate and key to sign the CSR. We will use the helper tool built into Containerlab for this purpose. Alternatively, purpose-made tools like `openssl` can be used, its use is out of scope for this workshop.
+
+In a production environment, the CSR is usually sent to an internal or external CA for signing.
 
 On your host VM, run:
 
@@ -320,11 +322,11 @@ On your host VM, run:
 containerlab tools cert ca create
 ```
 
-This will create 2 files - `ca.key` and `ca.pem` to sign the switch CSR.
+This will create 2 files - `ca.key` and `ca.pem` that can be used to sign the CSR received from the switch.
 
-Next we will request the switch to generate a CSR, get it signed and install it back on the switch. All this using a single command.
+Next we will request the switch to generate a CSR, get it signed and install it back on the switch. All this using a single command, Certz Rotate, which is used to rotate certificates on a network device.
 
-We will add the `leaf1` management IP into the SAN field of the certificate.
+We will also add the `leaf1` management IP into the SAN field of the certificate.
 
 **4.2.4 Generate CSR**
 
@@ -357,7 +359,7 @@ lmmMG9Mo13AQ/1lmQV+oMfAo\n-----END CERTIFICATE-----\n"}}}}
 INFO[0002] leaf1:57401: upload Response certificates:{} 
 ```
 
-The above output is shortened to show only the relevant parts. We can see the CSR that is generated by the switch, the signed certificate and a confirmation that the certificate was successfully installed on the switch.
+The above output is shortened to show only the relevant parts. We can see a CSR is generated and returned by the switch, a signed certificate is generated and installed on the switch, and a confirmation that the certificate was successfully installed on the switch.
 
 Verify that the new TLS profile is configured with these signed certificates. We will use gNMI Get RPC for this purpose.
 
@@ -440,7 +442,7 @@ To verify that the new TLS profile is working, let's get the Management port sta
 **4.2.7 gNMI Get**
 
 ```bash
-gnmic -a 172.20.20.2 -u admin -p admin --tls-ca ca.pem  get --path /interface[name=mgmt0]/statistics --encoding json_ietf
+gnmic -a 172.20.20.2 -u admin -p admin --tls-ca ca.pem get --path /interface[name=mgmt0]/statistics --encoding json_ietf
 ```
 
 ## Next Section: [gRIBI Service](https://github.com/srlinuxamericas/ac5-grpc/tree/main/gribi)

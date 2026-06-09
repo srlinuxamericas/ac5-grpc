@@ -31,11 +31,11 @@ supported models:
 
 gNMI Get RPC is used to retrieve the running configuration or operational state on the device.
 
-The lab startup configuration included all interfaces. Let's verify the configuration of the interface on leaf1 facing spine.
+The lab startup configuration included all interfaces. Let's verify the configuration of the interface on leaf1 facing the spine.
 
-To get the gNMI Xpath of an object, refer to the [SR Linux yang explorer](https://yang.srlinux.dev/) page. Search for the configuration or state object you are looking for.
+To get the gNMI XPath of an object in SR Linux, refer to the [Nokia YANG Browser](https://yangbrowser.nokia.com/srlinux/24.10.1?from=0) page. Here, you can search for the configuration or state object you are looking for. Alternatively, you can also get the gNMI XPath of an object from SR Linux CLI using the `pwc` command.
 
-Alternatively, you can also get the gNMI Xpath of an object from SR Linux CLI. Navigate to that object's context in SR LInux CLI.
+Let's try this out - navigate to the context of an interface in the SR Linux CLI.
 
 For example, on leaf1:
 
@@ -44,7 +44,7 @@ For example, on leaf1:
 interface ethernet-1/1
 ```
 
-Then run below command to get the gNMI path to be used in the gNMI request.
+Then run command below to get the gNMI path to be used in the gNMI Get request.
 
 ```bash
 pwc xpath
@@ -57,7 +57,7 @@ Expected output:
 ```
 
 
-Now that we have the path, let's get the configuration of this interface using gNMI.
+Now that we have the path, let's get the configuration of this interface using gNMI. To achieve this, we will use the gNMI Get RPC, and specify that we are looking for configuration objects under the provided XPath.
 
 ```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure --encoding json_ietf get --path /interface[name=ethernet-1/1] --type config
@@ -109,9 +109,9 @@ Expected output:
 
 **1.2.1 gNMI Get for State**
 
-Next let's get only the operational state of the client facing interface using gNMI. This comes from the state datastore.
+Next, let's get only the operational state of the client facing interface using gNMI. This comes from the state datastore.
 
-To get the state gNMI Xpath, search for the leafs under interface context in the SR Linux yang explorer.
+To find the operational state gNMI XPath, search for the state leafs under the interface context in the Nokia YANG Browser.
 
 ```
 gnmic -a leaf1:57401 -u admin -p admin --insecure get --path /interface[name=ethernet-1/10]/oper-state --encoding json_ietf
@@ -157,6 +157,8 @@ gnmic -a leaf1:57401 -u admin -p admin --insecure get --path /interface[name=eth
 
 The current MTU value should be 9232. Let's change this to 4000.
 
+The format used by the Update RPC is `<path>:::<type>:::<value>`.
+
 ```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure set --update /interface[name=ethernet-1/10]/mtu:::json:::4000
 ```
@@ -181,15 +183,15 @@ Verify the new MTU value using the Get request used above.
 
 ### 1.3.2 Update Path
 
-Another way to specify a path and value is using `--update-path` and `--update-value` options.
+Another way to update is to specify a path and value is using `--update-path` and `--update-value` options, where gNMIc uses the split path, value and encoding to create the RPC request.
 
-Modify the MTU of `ethernet-1/10` on leaf1 to 3600 using these keywords.
+Modify the MTU of `ethernet-1/10` on leaf1 to 3600 using these command line flags.
 
 ```bash
 gnmic -a leaf1 -u admin -p admin --skip-verify set --update-path /interface[name=ethernet-1/10]/mtu --update-value 3600 --encoding json_ietf
 ```
 
-Verify the current MTU using the Get request shown above.
+Verify the current MTU using the same Get request you used before.
 
 ### 1.3.3 Update File
 
@@ -206,13 +208,13 @@ We will configure the `system0` loopback interface on all 3 devices using this m
 The config files are located on your repo under [gnmi](../gnmi/) are in `json` format.
 
 Note:
-If you are wondering how to prepare the configuration in `json` format, SR Linux CLI has an option to display the configuration in `json` format. After an interface is configured, run the below command to display the interface configuration in `json` format. This can be copied to a file and used in the gNMI Set request.
+If you are wondering how to prepare the configuration in JSON format, SR Linux CLI has an option to display the configuration in many different formats, including JSON. After an interface is configured, run the command below to display the interface configuration in `json` format. This can be copied to a file and used in the gNMI Set request.
 
 ```bash
 info interface ethernet-1/1 | as json
 ```
 
-Let's push the system interface configuration on all 3 devices. ( make sure you are in ac5-grpc directory) 
+Let's push the system interface configuration on all 3 devices (make sure you are inside the `ac5-grpc` directory when running these commands!). 
 
 ```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure set --update-path /interface[name=system0] --update-file gnmi/leaf1-system.cfg --encoding json_ietf
@@ -246,7 +248,7 @@ gnmic -a leaf1:57401 -u admin -p admin --insecure --encoding json_ietf get --pat
 
 When replacing or overwriting an entire section of the config, the new config to be applied can be specified in a file along with the `--replace-path` and `--replace-file` options.
 
-This is equivalent to deleting the existing SNMP community and then configuring the new community value in 2 separate operations.
+This is equivalent to deleting the existing SNMP community and then configuring the new community value in a single atomic transaction.
 
 To try this, we will replace the SNMP section with a new config that has a different community value.
 
@@ -363,15 +365,15 @@ Expected output:
 ]
 ```
 
-### 1.3.5 Update CLI File
+### 1.3.5 Update CLI (File)
 
-Unlike SR Linux, some systems may not have 100% yang coverage for all configuration objects.
+Unlike SR Linux, some systems may not have 100% YANG model coverage for all configuration objects.
 
-And if gNMI is to be used as the only configuration tool, it is beneficial to have gNMI support config push using raw CLI commands. This is the purpose of the `--update-cli-file` option.
+If gNMI is to be used as the only configuration tool, it is beneficial to have gNMI support config push using raw CLI commands. This is the purpose of the `--update-cli` and `--update-cli-file` options.
 
-Let's add a SNMP community but this time pushed using raw CLI.
+Let's add a SNMP community, but this time, pushed using raw CLI commands!
 
-The SNMP community configuration in CLI format is in [leaf1-cli.cfg](leaf1-cli.cfg).
+The SNMP community configuration in CLI format can be found in [leaf1-cli.cfg](leaf1-cli.cfg).
 
 ```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure set --update-cli-file gnmi/leaf1-cli.cfg
@@ -401,7 +403,7 @@ gnmic -a leaf1:57401 -u admin -p admin --insecure get --path /system/snmp --enco
 
 ### 1.3.6 Commit confirm
 
-Commit confirm is a useful CLI feature when making critical changes. Using this feature allows the system to do an automatic rollback if the user does not accept or cancel a commit confirm before the timeout.
+Commit confirm is a useful CLI feature when making critical changes that might result in network impact, or even complete connectivity loss to a network device. Using this feature allows the system to do an automatic rollback if the user does not accept or cancel a commit confirm before the timeout.
 
 This feature is also supported on gNMIc.
 
@@ -413,7 +415,7 @@ Verify the current value using Get method:
 gnmic -a leaf1:57401 -u admin -p admin --insecure get --path /interface[name=ethernet-1/10]/mtu --encoding json_ietf
 ```
 
-Update the value to 8000 along with enabling commit confirm with a rollback duration of 5 minutes.
+Update the value to 8000 along with enabling commit confirm with a rollback duration of 5 minutes. To perform a commit confirm, a commit ID and a duration must be set in the gRPC Set RPC, along with the `--commit-request` option.
 
 ```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure set --update /interface[name=ethernet-1/10]/mtu:::json:::8000 --commit-id mtu-8000 --commit-request --rollback-duration 5m
@@ -445,7 +447,7 @@ We can see that the MTU value is now updated to 8000.
 
 When there is a commit confirm in progress, the system will not allow any new configuration changes via any management interface (CLI, Netconf, gRPC, JSON-RPC) until the active commit confirm is confirmed, cancelled or the rollback timer expires.
 
-The status bar at the bottom shows that a commit confirm is in progress and also shows the time remaining to accept or cancel the commit confirm.
+The status bar at the bottom of the SR Linux CLI shows that a commit confirm is in progress and also shows the time remaining to accept or cancel the commit confirm.
 
 ```bash
 [commit confirmed (rollback in a minute)] Current mode: + running
@@ -457,7 +459,7 @@ The following error will be displayed when trying to commit a new change while a
 target "leaf1:57401" set request failed: target "leaf1:57401" SetRequest failed: rpc error: code = Aborted desc = Cannot commit transaction (commit confirmed in progress)
 ```
 
-Details of an active commit confirm can be see from CLI using the following command:
+Details of an active commit confirm can be see from the SR Linux CLI using the following command:
 
 ```bash
 info flat from state system configuration commit * | tail
@@ -500,7 +502,7 @@ The MTU change is now permanently applied.
 
 ### 1.3.7 Delete
 
-Our last option with the Set method is to delete a configuration element.
+Our last option with the Set gRPC method is to delete a configuration element.
 
 Let us delete the MTU from `ethernet-1/10` on leaf1 so it will revert back to the default MTU value.
 
@@ -567,7 +569,7 @@ Expected output:
 
 ### 1.4.2 Sample
 
-If we need a continous stream of this stat, we will use the `SAMPLE` option along with a specific interval.
+If we need a continous stream of this state, we will use the `SAMPLE` option along with a specific interval.
 
 The following command streams the out packets value every 15 seconds.
 
@@ -575,14 +577,14 @@ The following command streams the out packets value every 15 seconds.
 gnmic -a leaf1:57401 -u admin -p admin --insecure sub --path /interface[name=ethernet-1/1]/statistics/out-packets --mode stream --stream-mode sample --sample-interval 15s
 ```
 
-The streaming session can be stopped using `CTRL+c`.
+The streaming session can be stopped by pressing `Ctrl+C`.
 
 
-### 1.4.3 On change
+### 1.4.3 On Change
 
-In some cases, we only want a counter when the value has changed. For example, after a new interface is configured, the out packets will be 0 until a protocol and neighbor are established. There is no benefit in streaming continous zeros.
+In some cases, we only want an update when the value of a has changed. A classic use-case for this is operational state of interfaces and network protocols, where immediate updates are required for monitoring. Another example, after a new interface is configured, the out packets will be 0 until a protocol and neighbor are established. There is no benefit in streaming continous zeros.
 
-This is where the `ON-CHANGE` option comes to the rescue.
+This is where the `ON_CHANGE` option comes to the rescue.
 
 When this option is enabled, the system will only stream data when the value of the object has changed.
 
@@ -602,8 +604,10 @@ ping 192.168.10.3 network-instance default
 
 While ping is in progress, check the streaming output. There should be a continous stream of the counter for every increment in the packet count.
 
-Stop the ping using `CTRL+c` and check the streaming output again. The stream has slowed down or is not streaming any more as there is no change in the counter value.
+Stop the ping using `Ctrl+C` and check the streaming output again. The stream has slowed down or is not streaming any more as there is no change in the counter value.
 
-Stop the streaming session using `CTRL+c`.
+Stop the streaming session using `Ctrl+C`.
+
+For quickly updating, dynamic leafs (e.g. a busy interface's in/out packet counter), the `SAMPLE` option is a better fit, while for leafs that are seldom updated, or require prompt monitoring updates, the `ON_CHANGE` option is ideal. 
 
 ## Next Section:   [Openconfig](https://github.com/srlinuxamericas/ac5-grpc/tree/main/openconfig)

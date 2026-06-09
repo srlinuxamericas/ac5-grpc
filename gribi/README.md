@@ -1,6 +1,6 @@
 # 5 gRIBI Use Case
 
-gRIBI can be used for route injection in to the FIB/RIB for real time traffic steering.
+gRIBI can be used for route injection into the FIB/RIB for real time traffic steering.
 
 In this workshop, we will demonstrate traffic re-routing with a simple use case.
 
@@ -27,9 +27,9 @@ The new lab that will be deployed is similar to the previous lab but without any
 
 ![image](../images/gribi-topo.jpg)
 
-Lab is deployed with all required configuration.
+Lab is deployed with all required configuration for connectivity between the nodes.
 
-**Wait for a few seconds for BGP sessions to come UP**
+**Wait for a few seconds for BGP sessions to establish.**
 
 Check the path taken from `leaf1` to reach `2.2.2.2` on `leaf2`. Perform a traceroute using gNOI System RPC.
 
@@ -51,7 +51,7 @@ We can see that the next-hop from `leaf1` to reach `2.2.2.2` is via Spine. This 
 
 Next, we will inject a route on `leaf1` to redirect traffic going to `2.2.2.2` to use the direct link to `leaf2`.
 
-Here's the payload that we will push.(#a-girbi-payload)
+Here's the payload that we will push:
 
 ```yaml
 default-network-instance: default
@@ -86,9 +86,9 @@ Before we push this route, let's verify the route table entries on `leaf1`.
 
 We will be using gNMI to get this state information.
 
-**5.1.2 gNMI Get**
+**5.1.2 Route table gNMI Get**
 
-```
+```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure get --path "/network-instance[name=default]/route-table/ipv4-unicast" --encoding=JSON_IETF --depth 2 | grep -E "prefix|active|type"
 ```
 
@@ -125,7 +125,9 @@ Before we push the route, let's get the current installed gRIBI routes.
 
 **5.1.3 gRIBI Get**
 
-```
+Note the network-instance and the AFT (Abstract Forwarding Tree) specified, selecting a RIB table (in this case, the IPv4 RIB).
+
+```bash
 gribic -a leaf1:57401 -u admin -p admin --insecure get --ns default --aft ipv4
 ```
 
@@ -139,11 +141,11 @@ INFO[0000] "leaf1:57401":
 
 There are no gRIBI routes at this time.
 
-Now, let's push the gRIBI route. The route payload shown above is saved in a file [grib-input.yml](grib-input.yml)
+Now, let's push the gRIBI route. We will use the aforementioned route payload, which can be found in the file [grib-input.yml](grib-input.yml)
 
 **5.1.4 gRIBI Modify**
 
-```
+```bash
 gribic -a leaf1:57401 -u admin -p admin --insecure modify --input-file grib-input.yml
 ```
 
@@ -262,11 +264,13 @@ entry: {
 } 
 ```
 
-Get the gRIBI installed next hop group:
+Get the gRIBI installed next-hop group:
 
 **5.1.6 gRIBI Get NHG**
 
-```
+To retrieve next-hop groups, we will query the `nhg` AFT instead.
+
+```bash
 gribic -a leaf1:57401 -u admin -p admin --insecure get --ns default --aft nhg
 ```
 
@@ -291,11 +295,13 @@ entry: {
 } 
 ```
 
-Get the gRIBI installed next hop:
+Get the gRIBI installed next-hop:
 
-**5.1.7 gRIBI Get Next Hop**
+**5.1.7 gRIBI Get Next-Hop**
 
-```
+The `nh` AFT contains next-hop information.
+
+```bash
 gribic -a leaf1:57401 -u admin -p admin --insecure get --ns default --aft nh
 ```
 
@@ -320,11 +326,11 @@ entry: {
 } 
 ```
 
-Now let's verify the route table on leaf1 and confirm that there is a route for `2.2.2.2/32` which is the loopback IP on leaf2.
+Now let's verify the route table on leaf1 and confirm that there is a route for `2.2.2.2/32`, which is the loopback IP on leaf2.
 
 **5.1.8 gNMI Get**
 
-```
+```bash
 gnmic -a leaf1:57401 -u admin -p admin --insecure get --path "/network-instance[name=default]/route-table/ipv4-unicast" --encoding=JSON_IETF --depth 2 | grep -E "prefix|active|type"
 ```
 
@@ -357,11 +363,11 @@ gnmic -a leaf1:57401 -u admin -p admin --insecure get --path "/network-instance[
 
 We can see that the route for `2.2.2.2` is now owned by gRIBI.
 
-Now it's time to check the path taken from `leaf1` to reach `2.2.2.2`. Repeat the traceroute command performed at the beginning of this activity and compare the next hops between the 2 outputs.
+Now it's time to check the path taken from `leaf1` to reach `2.2.2.2`. Repeat the traceroute command performed at the beginning of this activity and compare the next-hops between the 2 outputs.
 
 **5.1.9 gNOI Traceroute**
 
-```
+```bash
 gnoic -a leaf1:57401 -u gnoic1 -p gnoic1 --insecure system traceroute --destination 2.2.2.2 --ns default --wait 1s
 ```
 
@@ -389,6 +395,8 @@ INFO[0000] got 1 results
 INFO[0000] "leaf1:57401": timestamp: 1747763792059403059
 result: OK 
 ```
+
+You can repeat the traceroute once again, to confirm the traffic flows through spine as before.
 
 If you would like to do another challenge: [z-bonus-challenge](https://github.com/srlinuxamericas/ac5-grpc/tree/main/z-bonus-challenge)
 
