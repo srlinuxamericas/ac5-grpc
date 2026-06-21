@@ -172,7 +172,112 @@ Expected output:
 
 As this is a containerlab node, the health status is Unspecified.
 
-## 3.7 Software Upgrade using gNOI
+#### EXAMPLE - Optional 3.7 gNOI automation using Ansible
+
+Ansible modules can be used to automate gNOI or any other gRPC services.
+
+Let's assume we want to check the reachability of multiple IP's from multiple switches in our sample topology. This can be automated using Ansible.
+
+For our topology, we want to ping some IPs on `leaf2` from both `leaf1` and `spine`. We will also use a 3rd unknown IP to trigger a failure warning.
+
+Create ansible inventory file on your VM:
+
+```bash
+cat << EOF >> ping-inventory.yml
+all:
+  children:
+    nokia_switches:
+      hosts:
+        leaf1:
+          ansible_host: leaf1
+        spine:
+          ansible_host: spine
+
+      vars:
+        # Common credentials for all switches in this group
+        gnoi_port: 57400
+        gnoi_user: admin
+        gnoi_pass: $EVENT_PASSWORD
+        
+        # The universal ping list
+        ping_targets:
+          - { ip: "2.2.2.2", vrf: "default" }
+          - { ip: "192.168.20.2", vrf: "default" }
+          - { ip: "10.46.2.42", vrf: "default" }
+EOF
+```
+
+Next, create the ansible playbook on your VM:
+
+```bash
+
+cat << EOF >> ping-playbook.yml
+---
+---
+- name: gNOI Ping
+  hosts: nokia_switches
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Run gNOI ping checks (JSON output)
+      ansible.builtin.shell: >
+        gnoic -a {{ ansible_host }}:{{ gnoi_port }}
+        -u {{ gnoi_user }}
+        -p {{ gnoi_pass }}
+        --insecure
+        system ping
+        --destination {{ item.ip }}
+        --ns {{ item.vrf }}
+        --count 1
+        --wait 1s
+        --format json
+      loop: "{{ ping_targets }}"
+      loop_control:
+        label: "{{ item.ip }}"
+      register: raw_ping_results
+      changed_when: false
+      ignore_errors: true
+
+    - name: Evaluate ping results
+      ansible.builtin.set_fact:
+        ping_report: >-
+          {{ ping_report | default([]) + [{
+            'ip': item.item.ip,
+            'vrf': item.item.vrf,
+            'ok': ((item.stdout | from_json).response.received | default(0)) >= 1
+          }] }}
+      loop: "{{ raw_ping_results.results }}"
+      loop_control:
+        label: "{{ item.item.ip }}"
+
+    - name: Report ping results
+      ansible.builtin.debug:
+        msg: "[{{ inventory_hostname }}] {{ item.ip }} ({{ item.vrf }}) -> {{ 'OK' if item.ok else 'NOK' }}"
+      loop: "{{ ping_report }}"
+      loop_control:
+        label: "{{ item.ip }}"
+
+    - name: Fail the play if any ping check failed
+      ansible.builtin.fail:
+        msg: >-
+          [{{ inventory_hostname }}] one or more ping checks failed:
+          {{ ping_report | selectattr('ok', 'equalto', false) | map(attribute='ip') | list }}
+      when: ping_report | selectattr('ok', 'equalto', false) | list | length > 0
+EOF
+```
+
+Execute the playbook from your VM:
+
+```bash
+ansible-playbook -i ping-inventory.yml ping-playbook.yml
+```
+
+Expected output:
+
+```bash
+```
+## 3.8 Software Upgrade using gNOI
 
 This section is theory only as these RPCs cannot be implemented on a node in Containerlab.
 
