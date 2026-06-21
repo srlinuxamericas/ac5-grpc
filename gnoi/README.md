@@ -277,6 +277,7 @@ Expected output:
 
 ```bash
 ```
+*This playbook uses Ansible's ansible.builtin.shell module to call gnoic directly. Ansible's role here is orchestration — looping over hosts and targets, capturing output, and reporting pass/fail — while gnoic performs the actual gNOI RPC call.* 
 ## 3.8 Software Upgrade using gNOI
 
 This section is theory only as these RPCs cannot be implemented on a node in Containerlab.
